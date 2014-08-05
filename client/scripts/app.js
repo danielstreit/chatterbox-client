@@ -4,6 +4,7 @@ var $rooms;
 var app = {};
 app.username;
 app.server = 'https://api.parse.com/1/classes/chatterbox';
+
 app.init = function() {
   $chats = $('div#chats');
   $rooms = $('select#roomSelect');
@@ -15,14 +16,16 @@ app.init = function() {
   app.fetch();
   $('select').on('change', function(event) {
     app.currentRoom = $('select').val();
-  });
+  }); // end room selector
+
   $chats.on('click', function(event) {
     var $target = $(event.target);
     if ($target.hasClass('username')) {
       app.addFriend($target.text());
     }
-  });
-};
+  }); // end chats.on
+}; // end app.init()
+
 app.clearMessages = function() {
   $chats.empty();
 };
@@ -69,7 +72,7 @@ var post = {};
 post.url = app.server;
 post.type = 'POST';
 post.success = function(data) {
-  // Do something? Nah.
+  $.ajax(app.get); // immediately refresh page
 };
 post.contentType = 'application/json';
 
@@ -87,33 +90,30 @@ app.get.success = function(data) {
   for (var i = 0; i < data.length; i++) {
     app.addMessage(data[i]);
   } // end for (iterate through data array)
+  $('.spinner').css("opacity", "0"); // makes spinner invisible without removing from DOM after new message retrieval
 };
 app.get.contentType = 'application/jsonp';
 app.get.data = 'order=-createdAt';
 
 app.fetch = function() {
+  $('.spinner').css("opacity", "1"); // makes spinner visible during new message retrieval
   $.ajax(app.get);
-  setTimeout(app.fetch, 2000);
+  setTimeout(app.fetch, 4000);
 };
 
 app.handleSubmit = function(event) {
   event.preventDefault(); // prevent the button from reloading the page
-  var message = {};
-  message.username = app.username;
-  message.text = $('#message').val();
-  message.roomname = $('select').val();
-
-  app.send(message);
+   if ( $('#message').val() !== "") { // only posts if there is content in the message box
+    $('.spinner').css("opacity", "1"); // makes spinner visible during submission
+    var message = {};
+    message.username = app.username;
+    message.text = $('#message').val();
+    message.roomname = $('select').val();
+    app.send(message);
+    $('#message').val(""); // empty text box
+  } // end if (there is a message)
 };
 
 $(function() {
   app.init();
 });
-
-
-// GLOBAL
-
-var testMessage = {};
-testMessage.username = 'Grover Cleveland';
-testMessage.text = 'I\'m not even sure which President I am.';
-testMessage.roomname = 'lobby';
